@@ -8,6 +8,7 @@ import { RateLimiterRes } from "rate-limiter-flexible";
 import { logger } from "../../../lib/logger";
 import type { ApiErrorResponse } from "@/types/api";
 import { v4 as uuidv4 } from "uuid";
+import { allowCors } from "@/lib/cors";
 
 const registerSchema = z.object({
     fullName: z.string().min(1, "Full name is required"),
@@ -18,6 +19,15 @@ const registerSchema = z.object({
 type RegisterRequest = z.infer<typeof registerSchema>;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+    if (allowCors(req, res)) {
+        return;
+    }
+
+    // Handle preflight
+    if (req.method === "OPTIONS") {
+        return res.status(200).end();
+    }
+
     if (req.method !== 'POST') {
         res.setHeader("Allow", ["POST"]);
         return res.status(405)
@@ -121,4 +131,4 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             await prisma.$disconnect();
         }
     }
-}
+};

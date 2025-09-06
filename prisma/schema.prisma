@@ -1,0 +1,171 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+model Activities {
+  activity_id String    @id(map: "PK__Activiti__482FBD63B068E6A8") @default(dbgenerated("newid()"), map: "DF__Activitie__activ__7A672E12") @db.UniqueIdentifier
+  board_id    String    @db.UniqueIdentifier
+  actor_id    String    @db.UniqueIdentifier
+  action_type String    @db.NVarChar(50)
+  payload     String?   @db.NVarChar(Max)
+  created_at  DateTime? @default(dbgenerated("sysdatetime()"), map: "DF__Activitie__creat__7B5B524B")
+  Users       Users     @relation(fields: [actor_id], references: [user_id], onUpdate: NoAction, map: "FK__Activitie__actor__7D439ABD")
+  Boards      Boards    @relation(fields: [board_id], references: [board_id], onUpdate: NoAction, map: "FK__Activitie__board__7C4F7684")
+}
+
+model Attachments {
+  attachment_id String    @id(map: "PK__Attachme__B74DF4E273439899") @default(dbgenerated("newid()"), map: "DF__Attachmen__attac__74AE54BC") @db.UniqueIdentifier
+  card_id       String    @db.UniqueIdentifier
+  url           String    @db.NVarChar(500)
+  filename      String    @db.NVarChar(255)
+  size          BigInt?
+  content_type  String?   @db.NVarChar(100)
+  metadata      String?   @db.NVarChar(Max)
+  uploaded_by   String    @db.UniqueIdentifier
+  uploaded_at   DateTime? @default(dbgenerated("sysdatetime()"), map: "DF__Attachmen__uploa__75A278F5")
+  Cards         Cards     @relation(fields: [card_id], references: [card_id], onUpdate: NoAction, map: "FK__Attachmen__card___76969D2E")
+  Users         Users     @relation(fields: [uploaded_by], references: [user_id], onUpdate: NoAction, map: "FK__Attachmen__uploa__778AC167")
+}
+
+model Boards {
+  board_id     String       @id(map: "PK__Boards__FB1C96E9E9255318") @default(dbgenerated("newid()"), map: "DF__Boards__board_id__4CA06362") @db.UniqueIdentifier
+  workspace_id String       @db.UniqueIdentifier
+  title        String       @db.NVarChar(255)
+  description  String?      @db.NVarChar(Max)
+  owner_id     String       @db.UniqueIdentifier
+  settings     String?      @db.NVarChar(Max)
+  is_active    Boolean?     @default(true, map: "DF__Boards__is_activ__4D94879B")
+  created_at   DateTime?    @default(dbgenerated("sysdatetime()"), map: "DF__Boards__created___4E88ABD4")
+  Activities   Activities[]
+  Users        Users        @relation(fields: [owner_id], references: [user_id], onUpdate: NoAction, map: "FK__Boards__owner_id__5070F446")
+  Workspaces   Workspaces   @relation(fields: [workspace_id], references: [workspace_id], onUpdate: NoAction, map: "FK__Boards__workspac__4F7CD00D")
+  Cards        Cards[]
+  Columns      Columns[]
+  Labels       Labels[]
+}
+
+model CardAssignments {
+  card_id     String    @db.UniqueIdentifier
+  user_id     String    @db.UniqueIdentifier
+  role        String?   @default("Assignee", map: "DF__CardAssign__role__619B8048") @db.NVarChar(50)
+  assigned_at DateTime? @default(dbgenerated("sysdatetime()"), map: "DF__CardAssig__assig__628FA481")
+  Cards       Cards     @relation(fields: [card_id], references: [card_id], onUpdate: NoAction, map: "FK__CardAssig__card___6383C8BA")
+  Users       Users     @relation(fields: [user_id], references: [user_id], onUpdate: NoAction, map: "FK__CardAssig__user___6477ECF3")
+
+  @@id([card_id, user_id], map: "PK__CardAssi__5669E2ADEFA1B683")
+}
+
+model Cards {
+  card_id         String            @id(map: "PK__Cards__BDF201DD6C7CD5CF") @default(dbgenerated("newid()"), map: "DF__Cards__card_id__59063A47") @db.UniqueIdentifier
+  column_id       String            @db.UniqueIdentifier
+  board_id        String            @db.UniqueIdentifier
+  title           String            @db.NVarChar(255)
+  description     String?           @db.NVarChar(Max)
+  pos_index       Decimal           @db.Decimal(10, 4)
+  due_date        DateTime?
+  status          String?           @default("active", map: "DF__Cards__status__59FA5E80") @db.NVarChar(50)
+  extra_fields    String?           @db.NVarChar(Max)
+  created_by      String            @db.UniqueIdentifier
+  created_at      DateTime?         @default(dbgenerated("sysdatetime()"), map: "DF__Cards__created_a__5AEE82B9")
+  updated_at      DateTime?         @default(dbgenerated("sysdatetime()"), map: "DF__Cards__updated_a__5BE2A6F2")
+  Attachments     Attachments[]
+  CardAssignments CardAssignments[]
+  Boards          Boards            @relation(fields: [board_id], references: [board_id], onUpdate: NoAction, map: "FK__Cards__board_id__5DCAEF64")
+  Columns         Columns           @relation(fields: [column_id], references: [column_id], onUpdate: NoAction, map: "FK__Cards__column_id__5CD6CB2B")
+  Users           Users             @relation(fields: [created_by], references: [user_id], onUpdate: NoAction, map: "FK__Cards__created_b__5EBF139D")
+  Comments        Comments[]
+}
+
+model Columns {
+  column_id  String    @id(map: "PK__Columns__E301851FFB384D9E") @default(dbgenerated("newid()"), map: "DF__Columns__column___534D60F1") @db.UniqueIdentifier
+  board_id   String    @db.UniqueIdentifier
+  title      String    @db.NVarChar(255)
+  pos_index  Decimal   @db.Decimal(10, 4)
+  settings   String?   @db.NVarChar(Max)
+  is_active  Boolean?  @default(true, map: "DF__Columns__is_acti__5441852A")
+  created_at DateTime? @default(dbgenerated("sysdatetime()"), map: "DF__Columns__created__5535A963")
+  Cards      Cards[]
+  Boards     Boards    @relation(fields: [board_id], references: [board_id], onUpdate: NoAction, map: "FK__Columns__board_i__5629CD9C")
+}
+
+model Comments {
+  comment_id String    @id(map: "PK__Comments__E795768723DE8A81") @default(dbgenerated("newid()"), map: "DF__Comments__commen__6EF57B66") @db.UniqueIdentifier
+  card_id    String    @db.UniqueIdentifier
+  user_id    String    @db.UniqueIdentifier
+  content    String    @db.NVarChar(Max)
+  mentions   String?   @db.NVarChar(Max)
+  created_at DateTime? @default(dbgenerated("sysdatetime()"), map: "DF__Comments__create__6FE99F9F")
+  Cards      Cards     @relation(fields: [card_id], references: [card_id], onUpdate: NoAction, map: "FK__Comments__card_i__70DDC3D8")
+  Users      Users     @relation(fields: [user_id], references: [user_id], onUpdate: NoAction, map: "FK__Comments__user_i__71D1E811")
+}
+
+model Labels {
+  label_id String  @id(map: "PK__Labels__E44FFA58F1BF1A04") @default(dbgenerated("newid()"), map: "DF__Labels__label_id__05D8E0BE") @db.UniqueIdentifier
+  board_id String  @db.UniqueIdentifier
+  name     String  @db.NVarChar(100)
+  color    String  @db.NVarChar(20)
+  metadata String? @db.NVarChar(Max)
+  Boards   Boards  @relation(fields: [board_id], references: [board_id], onUpdate: NoAction, map: "FK__Labels__board_id__06CD04F7")
+}
+
+model Notifications {
+  notification_id String    @id(map: "PK__Notifica__E059842F9D5A4F21") @default(dbgenerated("newid()"), map: "DF__Notificat__notif__00200768") @db.UniqueIdentifier
+  user_id         String    @db.UniqueIdentifier
+  type            String    @db.NVarChar(50)
+  payload         String?   @db.NVarChar(Max)
+  is_read         Boolean?  @default(false, map: "DF__Notificat__is_re__01142BA1")
+  created_at      DateTime? @default(dbgenerated("sysdatetime()"), map: "DF__Notificat__creat__02084FDA")
+  Users           Users     @relation(fields: [user_id], references: [user_id], onUpdate: NoAction, map: "FK__Notificat__user___02FC7413")
+}
+
+model Users {
+  user_id          String             @id(map: "PK__Users__B9BE370F3590CC2C") @default(dbgenerated("newid()"), map: "DF__Users__user_id__38996AB5") @db.UniqueIdentifier
+  email            String             @unique(map: "UQ__Users__AB6E616472502369") @db.NVarChar(255)
+  password_hash    String             @db.NVarChar(255)
+  full_name        String             @db.NVarChar(255)
+  avatar_url       String?            @db.NVarChar(500)
+  role             String?            @default("Member", map: "DF__Users__role__398D8EEE") @db.NVarChar(50)
+  preferences      String?            @db.NVarChar(Max)
+  is_active        Boolean?           @default(true, map: "DF__Users__is_active__3A81B327")
+  created_at       DateTime?          @default(dbgenerated("sysdatetime()"), map: "DF__Users__created_a__3B75D760")
+  updated_at       DateTime?          @default(dbgenerated("sysdatetime()"), map: "DF__Users__updated_a__3C69FB99")
+  Activities       Activities[]
+  Attachments      Attachments[]
+  Boards           Boards[]
+  CardAssignments  CardAssignments[]
+  Cards            Cards[]
+  Comments         Comments[]
+  Notifications    Notifications[]
+  WorkspaceMembers WorkspaceMembers[]
+  Workspaces       Workspaces[]
+}
+
+model WorkspaceMembers {
+  workspace_member_id String     @id(map: "PK__Workspac__F29913C667AD5125") @default(dbgenerated("newid()"), map: "DF__Workspace__works__45F365D3") @db.UniqueIdentifier
+  workspace_id        String     @db.UniqueIdentifier
+  user_id             String     @db.UniqueIdentifier
+  role                String?    @default("Member", map: "DF__WorkspaceM__role__46E78A0C") @db.NVarChar(50)
+  permissions         String?    @db.NVarChar(Max)
+  joined_at           DateTime?  @default(dbgenerated("sysdatetime()"), map: "DF__Workspace__joine__47DBAE45")
+  Users               Users      @relation(fields: [user_id], references: [user_id], onUpdate: NoAction, map: "FK__Workspace__user___49C3F6B7")
+  Workspaces          Workspaces @relation(fields: [workspace_id], references: [workspace_id], onUpdate: NoAction, map: "FK__Workspace__works__48CFD27E")
+
+  @@unique([workspace_id, user_id], map: "UQ_Workspace_User")
+}
+
+model Workspaces {
+  workspace_id     String             @id(map: "PK__Workspac__7C58AC0B7462E196") @default(dbgenerated("newid()"), map: "DF__Workspace__works__3F466844") @db.UniqueIdentifier
+  name             String             @db.NVarChar(255)
+  owner_id         String             @db.UniqueIdentifier
+  settings         String?            @db.NVarChar(Max)
+  is_active        Boolean?           @default(true, map: "DF__Workspace__is_ac__403A8C7D")
+  created_at       DateTime?          @default(dbgenerated("sysdatetime()"), map: "DF__Workspace__creat__412EB0B6")
+  Boards           Boards[]
+  WorkspaceMembers WorkspaceMembers[]
+  Users            Users              @relation(fields: [owner_id], references: [user_id], onUpdate: NoAction, map: "FK__Workspace__owner__4222D4EF")
+}

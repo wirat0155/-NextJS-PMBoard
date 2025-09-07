@@ -1,6 +1,7 @@
 import { RateLimiterMemory } from "rate-limiter-flexible";
 
-export const registerLimiter = new RateLimiterMemory({
-    points: 5, // 5 requests
-    duration: 60, // per 60 seconds per IP
-});
+const createLimiter = (points: number, duration: number) => 
+    new RateLimiterMemory({points, duration});
+
+export const registerLimiter = createLimiter(10, 60);
+export const loginLimiter = createLimiter(10, 60)

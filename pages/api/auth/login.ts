@@ -3,14 +3,12 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { z } from "zod";
 import { prisma } from "../../../lib/prisma";
-import { PrismaClient } from "@prisma/client/extension";
 import { RateLimiterRes } from "rate-limiter-flexible";
 import { loginLimiter } from "../../../lib/rateLimiter";
 import { logger } from "../../../lib/logger";
 import { v4 as uuidv4 } from "uuid";
 import type { ApiErrorResponse } from "@/types/api";
 import { allowCors } from "@/lib/cors";
-import { cookies } from "next/headers";
 import cookie from "cookie";
 
 // Schema validation
